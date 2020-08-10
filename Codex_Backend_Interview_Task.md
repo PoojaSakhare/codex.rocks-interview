@@ -1,87 +1,75 @@
-# Codex.Rocks is a product based company which is building The Fastest Learning Online Software Game to teach kids to learn code.
-To get an OverView of Codex.Rocks Product, You can visit https://codex.rocks/
+const express = require('express');
+const jwt = require('jsonwebtoken');
 
-# Backend Task
+const app = express();
 
-**NOTE** :- We are extremely against the copy-paste, Please proceed further only if you think you are really interested in this internship and try to solve the assignment by yourself. Take minimal help from the internet.
+app.get('/api', function(req, res) {
+  res.json({
+    message: 'welcome to api'
+  });
+});
 
-Your task is to build a simple stateless microservices in nodeJs, with three major functionalities -
-- Authentication
-- JSON patching
-- Image Thumbnail Generation
+app.post('/api/posts', verifyToken, function(req, res) {
+  jwt.verify(req.token, 'passwordkey', function(err, authData) {
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      res.json({
+        message: 'post created',
+        authData
+      });
+    }
+  });
 
-We have no requirements for which frameworks/libraries to use, choose whichever seem best suited for the task!
+});
 
-### Required Endpoints
-
-The API should feature the following endpoint functionality -
-
-#### Public Endpoints
-- Login
-Request body should contain an arbitrary username/password pair
-Treat it as a mock authentication service and accept any username/password.
-Return a signed Json Web Token(JWT, https://jwt.io/) which can be used to validate future requests.
-
-
-#### Protected Endpoints
-The following two endpoints should be protected. The JWT obtained in the “Login” endpoint must be attached to each request.  If the JWT is missing or invalid, these endpoints should reject the request.
-
-- Apply Json Patch
-Request body should contain a JSON object and a JSON patch object (http://jsonpatch.com/).
-Apply the json patch to the json object, and return the resulting json object.
-
-- Create Thumbnail
-Request should contain a public image URL.
-Download the image, resize to 50x50 pixels, and return the resulting thumbnail.
-
-
-### General Requirements
-
-
-#### Code Requirements
-- Include a test suite for the microservice.
-- We recommend using Mocha (https://mochajs.org/).
-- API should reject invalid request inputs.  Test the edge cases!
-- Use modern javascript ES6 syntax.
-
-
-#### Other Requirements
-- Use Git for version control, and host the project in a Github repository.
-- Project should contain documentation with setup and usage instructions.
-- Project should install all dependencies with “npm install”, should start the server with “npm start”, and should run the test suite with “npm test”.
-- Really, please just don’t use “console.log” as the primary debugging/logging tool.
-- Javascript Style and Linting
-- Use a javascript linter, along with a linting npm script. We like clean code.
-- Dockerize
-- Include a working Dockerfile with the app directory.
-- Push a docker image to public DockerHub, and share the link
+app.post('/api/login', function(req, res) {
+  //mock user
+  const user = {
+    id: 1,
+    username: 'newuser',
+    email: 'user@gmail.com'
+  }
+  jwt.sign({
+    user: user
+  }, 'passwordkey', {
+    expiresIn: '3000s'
+  }, function(err, token) {
+    res.json({
+      token: token
+    });
+  });
+});
+//Format of token
+//Authorization: Bearer <access_token>
 
 
-#### Bonus Points
-- 100% code coverage in test suite.
-- We recommend using Istanbul (https://github.com/gotwarlost/istanbul) to generate code test coverage reports.
-- Extra Documentation
-- Include JSdoc comments and/or Swagger specifications to impress us.
-- Logging / Monitoring
-- Integrate a centralized app logging/monitoring system.
+// verify token
+
+function verifyToken(req, res, next) {
+  //get auth header value
+  const bearerHeader = req.headers['authorization'];
+  //check if bearer is undefined
+  if (typeof bearerHeader !== 'undefined') {
+    //split at the space
+    const bearer = bearerHeader.split(' ');
+    // get token from array
+    const bearerToken = bearer[1];
+    // set the token
+    req.token = bearerToken;
+    // next middleware
+    next();
+  } else {
+    //forbidden
+    res.sendStatus(403);
+  }
+}
 
 
 
-#### How we will judge the task
-- Project organization and code readability (40%)
-- API functionality correctness (15%)
-- Input validation and error handling (15%)
-- API speed and efficiency (10%)
-- Documentation (10%)
-- Unit Test Coverage (10%)
-- Bonus Points (up to +20%)
 
 
-#### Important
-Fork this repo and after completing the task, Mail the GitHub forked link to shrutika051220@gmail.com
 
-- Include a working Dockerfile with the app directory.
-
-## ALL THE BEST :)
-
-
+app.listen(3000, function() {
+  console.log("server is running on port 3000");
+})
